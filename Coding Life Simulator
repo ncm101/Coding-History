@@ -1,0 +1,34 @@
+#This game isn't top but it's a bit fun, so try it 
+me = ""
+print("press start ...")
+while True:
+    me = input("-").lower()
+    if me == "start":
+        print('''life strated ...
+              
+              Press Enter to continue:''')
+    elif me == "":
+        print('''
+Choose wt to do:
+1.Coding
+2.Search
+3.Quit life                                                        
+''')
+    elif me == "coding":
+        print("you are coding ...")
+    elif me == "search":
+        print('''
+you didn t find anything else to do.
+you go back to coding ...
+              ''')
+    elif me == "quit life":
+        print('''you finally died ...
+              
+              
+              
+              press next:''')
+    elif me == "next":    
+        print("you are now coding in paradise")
+        break
+    else:
+        print("press a command u stupid")
