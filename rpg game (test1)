@@ -1,0 +1,268 @@
+output ='''
+'''
+import random
+
+# Constants for maximum health and mana
+MAX_HEALTH = 120
+MAX_MANA = 50
+
+# Character Class
+class Character:
+    def __init__(self, name, role, health, attack, mana, skills):
+        self.name = name
+        self.role = role
+        self.health = health
+        self.attack = attack
+        self.mana = mana
+        self.skills = skills  # A dictionary of skills with their damage and mana cost
+
+    def normal_attack(self, enemy):
+        damage = random.randint(1, self.attack)
+        enemy.health -= damage
+        print(f"{self.name} strikes {enemy.name} for {damage} damage!")
+        if enemy.health <= 0:
+            print(f"{enemy.name} collapses into the abyss!")
+
+    def use_skill(self, enemy):
+        while True:
+            print("\nChoose a skill (or type 0 to return):")
+            for i, (skill_name, (damage, cost)) in enumerate(self.skills.items(), 1):
+                print(f"{i}. {skill_name} (Damage: {damage}, Mana Cost: {cost})")
+            choice = input("Enter the number of the skill: ")
+            if choice == "0":
+                print("Returning to Attack Mode...")
+                return  # Return to the attack mode menu
+            try:
+                skill_name = list(self.skills.keys())[int(choice) - 1]
+                damage, cost = self.skills[skill_name]
+                if self.mana >= cost:
+                    self.mana -= cost
+                    print(f"{self.name} uses {skill_name} on {enemy.name}, dealing {damage} damage!")
+                    enemy.health -= damage
+                    if enemy.health <= 0:
+                        print(f"{enemy.name} is consumed by the darkness!")
+                    return  # Exit after using a skill
+                else:
+                    print(f"{self.name} lacks the mana to use {skill_name}!")
+            except (IndexError, ValueError):
+                print("Invalid choice. Try again!")
+                print(output) 
+
+    def is_alive(self):
+        return self.health > 0
+
+
+# Player Class with Leveling System
+class Player(Character):
+    def __init__(self, name, role, health, attack, mana, skills):
+        super().__init__(name, role, health, attack, mana, skills)
+        self.level = 1
+        self.experience = 0
+        self.next_level_exp = 100
+
+    def gain_experience(self, amount):
+        self.experience += amount
+        print(f"{self.name} gained {amount} experience points!")
+        if self.experience >= self.next_level_exp:
+            self.level_up()
+
+    def level_up(self):
+        self.level += 1
+        self.experience -= self.next_level_exp
+        self.next_level_exp += 50  # Increase the experience needed for the next level
+        self.health = min(self.health + 20, MAX_HEALTH)
+        self.attack += 5
+        self.mana = min(self.mana + 10, MAX_MANA)
+        print(f"{self.name} leveled up to Level {self.level}!")
+        print(f"Stats increased: Health +20, Attack +5, Mana +10")
+        print(output)
+
+
+# Inventory System
+class Inventory:
+    def __init__(self):
+        self.items = {"Potion": 3, "Mana Potion": 2}  # Default items
+
+    def add_item(self, item, quantity=1):
+        if item in self.items:
+            self.items[item] += quantity
+        else:
+            self.items[item] = quantity
+        print(f"{item} added to your inventory! (x{quantity})")
+        print(output)
+
+    def use_item(self, item, player):
+        if item in self.items and self.items[item] > 0:
+            if item == "Potion":
+                heal_amount = random.randint(20, 40)
+                player.health = min(player.health + heal_amount, MAX_HEALTH)
+                print(f"You used a Potion and recovered {heal_amount} health!")
+            elif item == "Mana Potion":
+                mana_amount = random.randint(15, 30)
+                player.mana = min(player.mana + mana_amount, MAX_MANA)
+                print(f"You used a Mana Potion and recovered {mana_amount} mana!")
+            self.items[item] -= 1
+        else:
+            print(f"You don't have any {item} left!")
+            print(output)
+
+    def show_inventory(self):
+        print("\nInventory:")
+        for item, quantity in self.items.items():
+            print(f"{item}: {quantity}")
+
+
+# Quest System
+class Quest:
+    def __init__(self, name, description, reward):
+        self.name = name
+        self.description = description
+        self.reward = reward
+        self.completed = False
+
+    def complete_quest(self, player):
+        if not self.completed:
+            print(f"Quest Completed: {self.name}")
+            print(f"Reward: {self.reward} experience points!")
+            player.gain_experience(self.reward)
+            self.completed = True
+        else:
+            print("You have already completed this quest!")
+            print(output)
+
+
+def quest_list():
+    return [
+        Quest("Defeat the Goblin King", "Eliminate the Goblin King terrorizing the village.", 150),
+        Quest("Retrieve the Lost Artifact", "Find the ancient artifact hidden in the dungeon.", 200),
+        Quest("Slay the Dragon", "Defeat the dragon guarding the treasure.", 300),
+    ]
+
+
+# Function to choose a role
+def choose_role():
+    print("Choose your class:")
+    print("1. Knight (A stalwart defender with balanced stats)")
+    print("2. Thief (A cunning rogue with high attack)")
+    print("3. Mage (A fragile sorcerer with devastating magic)")
+    choice = input("Enter the number of your choice: ")
+    print(output)
+    if choice == "1":
+        skills = {
+            "Shield Bash": (30, 20),
+            "Holy Smite": (40, 30),
+            "Iron Will": (0, 10)  # Buff skill (no damage, but costs mana)
+        }
+        return "Knight", MAX_HEALTH, 10, MAX_MANA, skills
+    elif choice == "2":
+        skills = {
+            "Shadow Strike": (40, 15),
+            "Poison Blade": (30, 10),
+            "Backstab": (55, 25)
+        }
+        return "Thief", 90, 15, 40, skills
+    elif choice == "3":
+        skills = {
+            "Fireball": (60, 25),
+            "Dark Pulse": (70, 30),
+            "Soul Drain": (40, 20)  # Special skill for Mage
+        }
+        return "Mage", 70, 5, 100, skills
+    else:
+        print("Invalid choice, defaulting to Knight.")
+        skills = {
+            "Shield Bash": (30, 20),
+            "Holy Smite": (40, 30),
+            "Iron Will": (0, 10)
+        }
+        return "Knight", MAX_HEALTH, 10, MAX_MANA, skills
+
+
+# Function to generate a random monster
+def random_monster():
+    monsters = [
+        {"name": "Goblin", "health": 80, "attack": 12, "skills": {"Slash": (15, 0)}},
+        {"name": "Orc", "health": 120, "attack": 18, "skills": {"Smash": (25, 0)}},
+        {"name": "Skeleton", "health": 60, "attack": 10, "skills": {"Bone Throw": (12, 0)}},
+        {"name": "Lich", "health": 100, "attack": 15, "skills": {"Dark Curse": (20, 10)}},
+    ]
+    monster = random.choice(monsters)
+    return Character(monster["name"], "Enemy", monster["health"], monster["attack"], 0, monster["skills"])
+
+
+# Main game loop
+def main():
+    print("Welcome to the dark world of Ncm RPG!")
+    name = input("Enter your character's name: ")
+    role, health, attack, mana, skills = choose_role()
+    player = Player(name, role, health, attack, mana, skills)
+    inventory = Inventory()
+    quests = quest_list()
+
+    # Create an initial enemy
+    enemy = random_monster()
+
+    print(f"\n{name} the {role} awakens in a desolate land.")
+    print(f"A shadowy figure, the {enemy.name}, emerges from the darkness!\n")
+
+    # Main menu
+    while player.is_alive():
+        if enemy and not enemy.is_alive():  # Ensure enemy is not None
+            print(f"\n{name} has vanquished the {enemy.name}! The darkness recedes... for now.")
+            player.gain_experience(50)  # Gain experience for defeating an enemy
+            enemy = random_monster()
+
+        print(f"\n{player.name}'s Health: {player.health}, Mana: {player.mana}")
+        print(f"{enemy.name}'s Health: {enemy.health}")
+
+        action = input('''\nChoose an action:
+ (1) Attack (2) Use Item (3) View Inventory (4) View Quests (5) Retreat: ''')
+        if action == "1":
+            # Attack Mode
+            while player.is_alive() and enemy.is_alive():
+                print(f"\n{player.name}'s Health: {player.health}, Mana: {player.mana}")
+                print(f"{enemy.name}'s Health: {enemy.health}")
+                attack_action = input("Choose an attack: (1) Normal Attack (2) Use Skill (0 to return): ")
+                if attack_action == "1":
+                    player.normal_attack(enemy)
+                    if enemy.is_alive():
+                        enemy.normal_attack(player)
+                elif attack_action == "2":
+                    player.use_skill(enemy)
+                    if enemy.is_alive():
+                        enemy.normal_attack(player)
+                elif attack_action == "0":
+                    print("Returning to the main menu...")
+                    break
+                else:
+                    print("Invalid attack action. Try again.")
+                    print(output)
+        elif action == "2":
+            # Use Item
+            inventory.show_inventory()
+            item = input("Enter the name of the item to use: ")
+            print(output)
+            inventory.use_item(item, player)
+        elif action == "3":
+            # View Inventory
+            inventory.show_inventory()
+        elif action == "4":
+            # View Quests
+            for quest in quests:
+                print(f"{quest.name}: {quest.description} (Reward: {quest.reward} EXP)")
+        elif action == "5":
+            # Retreat
+            print(f"{player.name} retreats from the battle!")
+            print(output)
+            enemy = random_monster()  # Generate a new enemy after retreating
+            print(f"A new enemy, {enemy.name}, appears!")
+        else:
+            print("Invalid action. Try again.")
+            print(output)
+
+    print(f"\n{name} succumbs to the darkness. You have perished.")
+    print(output)
+    print("                Game Over!")
+
+if __name__ == "__main__":
+    main()
